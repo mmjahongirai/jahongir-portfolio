@@ -18,16 +18,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchProfile = useCallback(async (userId: string): Promise<Profile | null> => {
+  const ensureProfile = useCallback(async (userId: string, email: string): Promise<Profile | null> => {
     try {
-      // Use maybeSingle() — returns null instead of throwing when no row found
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .maybeSingle();
-      if (error) return null;
-      return data as Profile | null;
+
+      if (!error && data) return data as Profile;
+
+      // Table missing / RLS / network
+      if (error && (error.code === 'PGRST205' || error.code === '42P01' || error.message?.includes('schema cache'))) {
+        return null;
+      }
+
+      // Create profile only if missing (do not overwrite admin role)
+      const { data: inserted, error: insertError } = await supabase
+        .from('profiles')
+        .insert({ id: userId, email, role: 'user' })
+        .select('*')
+        .maybeSingle();
+
+      if (insertError) {
+        const { data: again } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
+        return (again as Profile | null) ?? null;
+      }
+      return (inserted as Profile | null) ?? null;
     } catch {
       return null;
     }
@@ -36,37 +53,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
-    // Load initial session once
     const init = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user && mounted) {
-          const profile = await fetchProfile(session.user.id);
+          const profile = await ensureProfile(session.user.id, session.user.email || '');
           if (mounted) setUser(profile);
         }
       } catch {
-        // ignore — setLoading(false) still runs below
+        // ignore
       } finally {
         if (mounted) setLoading(false);
       }
     };
     init();
 
-    // Auth state changes — wrap async work in IIFE to avoid onAuthStateChange deadlock
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       ;(async () => {
         if (!mounted) return;
         if (session?.user) {
-          const profile = await fetchProfile(session.user.id);
+          const profile = await ensureProfile(session.user.id, session.user.email || '');
           if (mounted) {
             setUser(profile);
             setLoading(false);
           }
-        } else {
-          if (mounted) {
-            setUser(null);
-            setLoading(false);
-          }
+        } else if (mounted) {
+          setUser(null);
+          setLoading(false);
         }
       })();
     });
@@ -75,12 +88,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [fetchProfile]);
+  }, [ensureProfile]);
 
   const signIn = useCallback(async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    return { error: error?.message || null };
-  }, []);
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) return { error: error.message };
+
+    if (data.user) {
+      const profile = await ensureProfile(data.user.id, data.user.email || email);
+      setUser(profile);
+      if (!profile) {
+        return {
+          error:
+            'Logged in, but profiles table is missing or incomplete. Run supabase/SETUP_ALL.sql in the Supabase SQL Editor.',
+        };
+      }
+      if (profile.role !== 'admin') {
+        return {
+          error:
+            "Account exists but is not admin. In Supabase SQL run: update profiles set role = 'admin' where email = 'mmjahongirai@gmail.com';",
+        };
+      }
+    }
+
+    return { error: null };
+  }, [ensureProfile]);
 
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
