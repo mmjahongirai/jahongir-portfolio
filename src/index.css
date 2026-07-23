@@ -68,6 +68,7 @@
     min-height: 100dvh;
     min-height: -webkit-fill-available;
     background-color: var(--chrome-bg, var(--bg-primary));
+    /* Let Safari sample the page behind translucent chrome (Google-style) */
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
     -webkit-font-smoothing: antialiased;
@@ -87,9 +88,11 @@
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", ui-sans-serif, system-ui, sans-serif;
     letter-spacing: -0.012em;
     transition: color 0.45s ease, background-color 0.45s ease;
+    /* Content may paint under system chrome; no opaque safe-area covers */
+    padding: 0;
   }
 
-  /* Full-bleed paint behind notch / home indicator — same hex as theme-color */
+  /* Full-bleed canvas behind translucent Safari/Chrome bars */
   body::before {
     content: "";
     position: fixed;
@@ -99,27 +102,21 @@
     background-color: var(--chrome-bg, var(--bg-primary));
   }
 
-  /* Top + bottom safe-area — same solid canvas under clock / home indicator */
-  .site-chrome-bleed {
-    position: fixed;
-    top: 0;
-    right: 0;
-    left: 0;
-    z-index: 2;
-    height: max(env(safe-area-inset-top, 0px), 0px);
-    pointer-events: none;
-    background-color: var(--chrome-bg, var(--bg-primary));
+  /*
+   * Do NOT paint opaque top/bottom strips — they block Google-style
+   * frosted translucent browser chrome (content must scroll underneath).
+   */
+  .site-chrome-bleed,
+  .site-chrome-bleed-bottom {
+    display: none !important;
   }
 
-  .site-chrome-bleed-bottom {
-    position: fixed;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    z-index: 2;
-    height: max(env(safe-area-inset-bottom, 0px), 0px);
-    pointer-events: none;
-    background-color: var(--chrome-bg, var(--bg-primary));
+  /* Main column: allow scroll under bottom toolbar; keep readable inset via sections */
+  main {
+    position: relative;
+    z-index: 10;
+    min-height: 100dvh;
+    background: transparent;
   }
 
   button,

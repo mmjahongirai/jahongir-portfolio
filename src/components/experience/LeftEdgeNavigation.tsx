@@ -56,9 +56,6 @@ export function LeftEdgeNavigation() {
 
   return (
     <>
-      <div className="site-chrome-bleed" aria-hidden="true" />
-      <div className="site-chrome-bleed-bottom" aria-hidden="true" />
-
       <div
         className="vision-edge-sensor fixed left-0 top-16 z-[90] hidden h-[34rem] w-7 lg:block"
         onMouseEnter={reveal}
