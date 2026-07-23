@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -15,6 +15,7 @@ import {
   Sparkles,
   Sun,
   UserRound,
+  X,
 } from 'lucide-react';
 import { useLanguage } from '@/lib/language';
 import { useTheme } from '@/lib/theme';
@@ -28,15 +29,18 @@ const navItems = [
   { label: 'Contact', href: '/#contact', icon: Contact, id: 'contact' },
 ];
 
+const languages = ['en', 'ru', 'uz'] as const;
+
 export function LeftEdgeNavigation() {
   const pathname = usePathname();
   const { lang, setLang } = useLanguage();
   const { isDark, toggle } = useTheme();
   const [open, setOpen] = useState(false);
   const [languagesOpen, setLanguagesOpen] = useState(false);
+  const [mobileLangOpen, setMobileLangOpen] = useState(false);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  if (pathname.startsWith('/admin')) return null;
+  const mobileLangRef = useRef<HTMLDivElement>(null);
+  const isAdmin = pathname.startsWith('/admin');
 
   const reveal = () => {
     if (closeTimer.current) clearTimeout(closeTimer.current);
@@ -50,8 +54,23 @@ export function LeftEdgeNavigation() {
     }, 320);
   };
 
+  useEffect(() => {
+    if (!mobileLangOpen) return;
+    const onPointerDown = (event: PointerEvent) => {
+      if (!mobileLangRef.current?.contains(event.target as Node)) {
+        setMobileLangOpen(false);
+      }
+    };
+    document.addEventListener('pointerdown', onPointerDown);
+    return () => document.removeEventListener('pointerdown', onPointerDown);
+  }, [mobileLangOpen]);
+
+  if (isAdmin) return null;
+
   return (
     <>
+      <div className="site-chrome-bleed" aria-hidden="true" />
+
       <div
         className="vision-edge-sensor fixed left-0 top-16 z-[90] hidden h-[34rem] w-7 lg:block"
         onMouseEnter={reveal}
@@ -120,7 +139,7 @@ export function LeftEdgeNavigation() {
                 exit={{ opacity: 0, x: -8, scale: 0.95 }}
                 className="vision-language-popover"
               >
-                {(['en', 'ru', 'uz'] as const).map(language => (
+                {languages.map(language => (
                   <button
                     key={language}
                     type="button"
@@ -157,13 +176,56 @@ export function LeftEdgeNavigation() {
         </button>
       </motion.aside>
 
+      {/* Mobile: always-visible language control (top-right) */}
+      <div ref={mobileLangRef} className="vision-mobile-lang lg:hidden">
+        <button
+          type="button"
+          className="vision-mobile-lang-trigger"
+          onClick={() => setMobileLangOpen(value => !value)}
+          aria-expanded={mobileLangOpen}
+          aria-label="Change language"
+        >
+          <Languages className="h-4 w-4" />
+          <span>{lang.toUpperCase()}</span>
+        </button>
+        <AnimatePresence>
+          {mobileLangOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -6, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -6, scale: 0.96 }}
+              className="vision-mobile-lang-menu"
+            >
+              {languages.map(language => (
+                <button
+                  key={language}
+                  type="button"
+                  onClick={() => {
+                    setLang(language);
+                    setMobileLangOpen(false);
+                  }}
+                  className={cn('vision-mobile-lang-btn', lang === language && 'is-active')}
+                  aria-pressed={lang === language}
+                >
+                  {language.toUpperCase()}
+                </button>
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
       <button
         type="button"
-        onClick={() => setOpen(value => !value)}
-        className="vision-mobile-trigger fixed left-4 top-4 z-[101] flex h-11 w-11 items-center justify-center lg:hidden"
-        aria-label="Open navigation"
+        onClick={() => {
+          setOpen(value => !value);
+          setMobileLangOpen(false);
+        }}
+        className="vision-mobile-trigger lg:hidden"
+        aria-label={open ? 'Close navigation' : 'Open navigation'}
+        aria-expanded={open}
       >
-        <PanelLeftClose className="h-5 w-5" />
+        {open ? <X className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />}
       </button>
 
       <AnimatePresence>
@@ -172,15 +234,47 @@ export function LeftEdgeNavigation() {
             initial={{ opacity: 0, y: 18, scale: 0.94 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 18, scale: 0.94 }}
-            className="vision-mobile-dock fixed left-4 top-[4.5rem] z-[100] flex flex-col gap-2 p-2 lg:hidden"
+            className="vision-mobile-dock lg:hidden"
           >
             {navItems.map(({ label, href, icon: Icon }) => (
-              <Link key={label} href={href} className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm">
+              <Link
+                key={label}
+                href={href}
+                onClick={() => setOpen(false)}
+                className="flex min-h-11 items-center gap-3 rounded-xl px-3 py-2 text-sm"
+              >
                 <Icon className="h-4 w-4" />
                 {label}
               </Link>
             ))}
-            <button type="button" onClick={toggle} className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm">
+
+            <div className="my-1 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+
+            <div className="vision-mobile-dock-lang">
+              <div className="mb-2 flex items-center gap-2 px-2 text-xs font-semibold uppercase tracking-[0.14em] text-cyan-200/80">
+                <Languages className="h-3.5 w-3.5" />
+                Language / Til
+              </div>
+              <div className="flex items-center gap-1" role="group" aria-label="Language">
+                {languages.map(language => (
+                  <button
+                    key={language}
+                    type="button"
+                    onClick={() => setLang(language)}
+                    className={cn('vision-mobile-lang-btn flex-1', lang === language && 'is-active')}
+                    aria-pressed={lang === language}
+                  >
+                    {language.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={toggle}
+              className="flex min-h-11 items-center gap-3 rounded-xl px-3 py-2 text-sm"
+            >
               <motion.span
                 key={isDark ? 'mobile-sun' : 'mobile-moon'}
                 initial={{ opacity: 0, rotate: -60, scale: 0.6 }}
