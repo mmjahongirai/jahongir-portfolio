@@ -6,13 +6,12 @@ type Theme = 'dark' | 'light';
 const THEME_STORAGE_KEY = 'portfolio-theme-v2';
 
 /**
- * Canvas + browser chrome must share these exact hex values.
- * Light = cool paper (matches page). Dark = navy (not near-black).
- * Safari/Chrome theme-color paints status + address bars from this.
+ * ONE solid canvas color per mode (Telegram / Instagram style).
+ * Must equal html/body/--chrome-bg/theme-color exactly — no middle tint.
  */
 export const THEME_COLORS = {
-  light: '#eef2f7',
-  dark: '#0b1220',
+  light: '#e7ebf0',
+  dark: '#0e1621',
 } as const;
 
 type ThemeContextType = {
@@ -40,16 +39,23 @@ function currentThemeFromDom(): Theme {
   return document.documentElement.classList.contains('dark') ? 'dark' : 'light';
 }
 
-/**
- * Keep Safari + Chrome (Android/iOS) toolbars locked to the site canvas color.
- * Dual color-scheme / media theme-color metas make chrome follow the phone OS instead.
- */
+function paintCanvas(color: string, theme: Theme) {
+  const root = document.documentElement;
+  root.classList.toggle('dark', theme === 'dark');
+  root.style.colorScheme = theme;
+  root.style.backgroundColor = color;
+  root.style.setProperty('--chrome-bg', color);
+  root.style.setProperty('--bg-primary', color);
+  if (document.body) document.body.style.backgroundColor = color;
+}
+
+/** Lock Safari + Chrome chrome to the single site canvas color. */
 export function syncThemeColorMeta(theme: Theme) {
   const color = THEME_COLORS[theme];
   const head = document.head;
-  const syncing = (window as Window & { __chromeSyncing?: boolean });
-  if (syncing.__chromeSyncing) return;
-  syncing.__chromeSyncing = true;
+  const flag = window as Window & { __chromeSyncing?: boolean };
+  if (flag.__chromeSyncing) return;
+  flag.__chromeSyncing = true;
 
   try {
     head.querySelectorAll('meta[name="theme-color"]').forEach(node => node.remove());
@@ -65,56 +71,31 @@ export function syncThemeColorMeta(theme: Theme) {
     scheme.setAttribute('content', theme);
     head.appendChild(scheme);
 
-    let appleCapable = head.querySelector<HTMLMetaElement>('meta[name="apple-mobile-web-app-capable"]');
-    if (!appleCapable) {
-      appleCapable = document.createElement('meta');
-      appleCapable.setAttribute('name', 'apple-mobile-web-app-capable');
-      head.appendChild(appleCapable);
-    }
-    appleCapable.setAttribute('content', 'yes');
+    const ensure = (name: string, content: string) => {
+      let el = head.querySelector<HTMLMetaElement>(`meta[name="${name}"]`);
+      if (!el) {
+        el = document.createElement('meta');
+        el.setAttribute('name', name);
+        head.appendChild(el);
+      }
+      el.setAttribute('content', content);
+    };
 
-    let mobileCapable = head.querySelector<HTMLMetaElement>('meta[name="mobile-web-app-capable"]');
-    if (!mobileCapable) {
-      mobileCapable = document.createElement('meta');
-      mobileCapable.setAttribute('name', 'mobile-web-app-capable');
-      head.appendChild(mobileCapable);
-    }
-    mobileCapable.setAttribute('content', 'yes');
+    ensure('apple-mobile-web-app-capable', 'yes');
+    ensure('mobile-web-app-capable', 'yes');
+    // Translucent status bar → clock sits ON the same canvas color (Telegram-style)
+    ensure('apple-mobile-web-app-status-bar-style', 'black-translucent');
+    ensure('msapplication-TileColor', color);
 
-    let appleBar = head.querySelector<HTMLMetaElement>('meta[name="apple-mobile-web-app-status-bar-style"]');
-    if (!appleBar) {
-      appleBar = document.createElement('meta');
-      appleBar.setAttribute('name', 'apple-mobile-web-app-status-bar-style');
-      head.appendChild(appleBar);
-    }
-    appleBar.setAttribute('content', theme === 'dark' ? 'black-translucent' : 'default');
-
-    let tile = head.querySelector<HTMLMetaElement>('meta[name="msapplication-TileColor"]');
-    if (!tile) {
-      tile = document.createElement('meta');
-      tile.setAttribute('name', 'msapplication-TileColor');
-      head.appendChild(tile);
-    }
-    tile.setAttribute('content', color);
-
-    const root = document.documentElement;
-    root.classList.toggle('dark', theme === 'dark');
-    root.style.colorScheme = theme;
-    root.style.backgroundColor = color;
-    root.style.setProperty('--chrome-bg', color);
-    root.style.setProperty('--bg-primary', color);
-
-    if (document.body) {
-      document.body.style.backgroundColor = color;
-    }
+    paintCanvas(color, theme);
 
     requestAnimationFrame(() => {
       const live = head.querySelector('meta[name="theme-color"]');
       if (live?.parentNode) live.parentNode.appendChild(live);
-      syncing.__chromeSyncing = false;
+      flag.__chromeSyncing = false;
     });
   } catch {
-    syncing.__chromeSyncing = false;
+    flag.__chromeSyncing = false;
   }
 }
 
@@ -149,36 +130,28 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     return () => media.removeEventListener('change', handleChange);
   }, []);
 
-  // Re-assert after hydration / bfcache / tab focus (Next may reinject metas)
   useEffect(() => {
-    const resync = () => applyTheme(getInitialTheme());
+    const resync = () => applyTheme(currentThemeFromDom());
+    const timers = [0, 100, 400].map(ms => window.setTimeout(resync, ms));
 
-    const t0 = window.setTimeout(resync, 0);
-    const t1 = window.setTimeout(() => applyTheme(currentThemeFromDom()), 150);
-    const t2 = window.setTimeout(() => applyTheme(currentThemeFromDom()), 600);
-
-    const onShow = () => applyTheme(currentThemeFromDom());
+    const onShow = () => resync();
     window.addEventListener('pageshow', onShow);
     document.addEventListener('visibilitychange', onShow);
 
     const observer = new MutationObserver(() => {
-      const metas = document.head.querySelectorAll('meta[name="theme-color"]');
-      const schemes = document.head.querySelectorAll('meta[name="color-scheme"]');
+      if ((window as Window & { __chromeSyncing?: boolean }).__chromeSyncing) return;
       const color = THEME_COLORS[currentThemeFromDom()];
-      const themeMetaOk =
+      const metas = document.head.querySelectorAll('meta[name="theme-color"]');
+      const ok =
         metas.length === 1 &&
         !metas[0].hasAttribute('media') &&
         metas[0].getAttribute('content')?.toLowerCase() === color;
-      const schemeOk =
-        schemes.length === 1 && schemes[0].getAttribute('content') === currentThemeFromDom();
-      if (!themeMetaOk || !schemeOk) applyTheme(currentThemeFromDom());
+      if (!ok) resync();
     });
     observer.observe(document.head, { childList: true, subtree: true, attributes: true });
 
     return () => {
-      window.clearTimeout(t0);
-      window.clearTimeout(t1);
-      window.clearTimeout(t2);
+      timers.forEach(id => window.clearTimeout(id));
       window.removeEventListener('pageshow', onShow);
       document.removeEventListener('visibilitychange', onShow);
       observer.disconnect();

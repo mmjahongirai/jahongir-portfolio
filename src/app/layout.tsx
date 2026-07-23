@@ -62,14 +62,14 @@ export const viewport: Viewport = {
   maximumScale: 5,
   viewportFit: 'cover',
   // Runtime locks a single theme-color to the active canvas (no dual OS media).
-  themeColor: '#0b1220',
+  themeColor: '#0e1621',
 };
 
 const themeScript = `
   (function () {
     try {
-      var LIGHT = '#eef2f7';
-      var DARK = '#0b1220';
+      var LIGHT = '#e7ebf0';
+      var DARK = '#0e1621';
       var stored = localStorage.getItem('portfolio-theme-v2');
       var dark = stored ? stored === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
       var theme = dark ? 'dark' : 'light';
@@ -101,7 +101,7 @@ const themeScript = `
         apple.setAttribute('name', 'apple-mobile-web-app-status-bar-style');
         head.appendChild(apple);
       }
-      apple.setAttribute('content', dark ? 'black-translucent' : 'default');
+      apple.setAttribute('content', 'black-translucent');
     } catch (_) {}
   })();
 `;

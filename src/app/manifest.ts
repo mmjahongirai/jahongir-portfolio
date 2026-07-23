@@ -7,7 +7,7 @@ export default function manifest(): MetadataRoute.Manifest {
     description: 'A premium interactive portfolio at the intersection of finance, analytics and artificial intelligence.',
     start_url: '/',
     display: 'standalone',
-    background_color: '#0b1220',
-    theme_color: '#0b1220',
+    background_color: '#0e1621',
+    theme_color: '#0e1621',
   };
 }

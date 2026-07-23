@@ -5,8 +5,8 @@
 @layer base {
   :root {
     color-scheme: light;
-    --bg-primary: #eef2f7;
-    --chrome-bg: #eef2f7;
+    --bg-primary: #e7ebf0;
+    --chrome-bg: #e7ebf0;
     --bg-secondary: rgba(238, 241, 247, 0.76);
     --bg-elevated: rgba(255, 255, 255, 0.86);
     --bg-card: rgba(255, 255, 255, 0.54);
@@ -32,8 +32,8 @@
 
   .dark {
     color-scheme: dark;
-    --bg-primary: #0b1220;
-    --chrome-bg: #0b1220;
+    --bg-primary: #0e1621;
+    --chrome-bg: #0e1621;
     --bg-secondary: rgba(15, 22, 40, 0.78);
     --bg-elevated: rgba(25, 34, 58, 0.82);
     --bg-card: rgba(17, 25, 46, 0.58);
@@ -99,26 +99,25 @@
     background-color: var(--chrome-bg, var(--bg-primary));
   }
 
-  /* Top safe-area strip (under status bar when viewport-fit=cover) */
+  /* Top + bottom safe-area — same solid canvas under clock / home indicator */
   .site-chrome-bleed {
     position: fixed;
     top: 0;
     right: 0;
     left: 0;
     z-index: 2;
-    height: env(safe-area-inset-top, 0px);
+    height: max(env(safe-area-inset-top, 0px), 0px);
     pointer-events: none;
     background-color: var(--chrome-bg, var(--bg-primary));
   }
 
-  /* Bottom safe-area strip (above home indicator) */
   .site-chrome-bleed-bottom {
     position: fixed;
     right: 0;
     bottom: 0;
     left: 0;
     z-index: 2;
-    height: env(safe-area-inset-bottom, 0px);
+    height: max(env(safe-area-inset-bottom, 0px), 0px);
     pointer-events: none;
     background-color: var(--chrome-bg, var(--bg-primary));
   }
@@ -172,7 +171,7 @@
   }
 
   .section-alt {
-    background: linear-gradient(180deg, transparent, var(--bg-secondary), transparent);
+    background: none;
   }
 
   .grid-bg {
@@ -462,7 +461,7 @@
     padding-top: 2rem;
   }
 
-  /* Ambient environment — solid canvas at edges (= theme-color); glows masked inward */
+  /* Flat canvas only — same hex as theme-color (Telegram/Instagram style) */
   .ambient-environment {
     position: fixed;
     inset: 0;
@@ -471,139 +470,18 @@
     pointer-events: none;
     background-color: var(--chrome-bg, var(--bg-primary));
     background-image: none;
-    transition: background-color 0.45s ease;
   }
 
-  .ambient-environment::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background-image:
-      radial-gradient(circle at 15% 18%, rgba(89, 204, 241, 0.1), transparent 28rem),
-      radial-gradient(circle at 83% 22%, rgba(121, 91, 255, 0.09), transparent 32rem);
-    /* Keep top/bottom strips pure --chrome-bg so bars blend */
-    mask-image: linear-gradient(
-      to bottom,
-      transparent 0,
-      #000 4.75rem,
-      #000 calc(100% - 5.5rem),
-      transparent 100%
-    );
-    -webkit-mask-image: linear-gradient(
-      to bottom,
-      transparent 0,
-      #000 4.75rem,
-      #000 calc(100% - 5.5rem),
-      transparent 100%
-    );
-    pointer-events: none;
-  }
-
-  .dark .ambient-environment::before {
-    background-image:
-      radial-gradient(circle at 12% 18%, rgba(0, 178, 220, 0.12), transparent 32rem),
-      radial-gradient(circle at 82% 22%, rgba(112, 68, 255, 0.14), transparent 36rem),
-      radial-gradient(circle at 50% 88%, rgba(39, 95, 174, 0.1), transparent 28rem);
-  }
-
-  /* Orbs/noise must not tint the top/bottom strips that meet browser chrome */
-  .ambient-environment > * {
-    mask-image: linear-gradient(
-      to bottom,
-      transparent 0,
-      #000 4.75rem,
-      #000 calc(100% - 5.5rem),
-      transparent 100%
-    );
-    -webkit-mask-image: linear-gradient(
-      to bottom,
-      transparent 0,
-      #000 4.75rem,
-      #000 calc(100% - 5.5rem),
-      transparent 100%
-    );
-  }
-
-  .ambient-grid {
-    position: absolute;
-    inset: 0;
-    background-image:
-      linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
-      linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
-    background-size: 76px 76px;
-    mask-image: radial-gradient(circle at center, black, transparent 82%);
-  }
-
-  .ambient-pointer-light {
-    position: absolute;
-    width: 32rem;
-    height: 32rem;
-    border-radius: 999px;
-    background: rgba(89, 212, 244, 0.09);
-    filter: blur(80px);
-    transform: translate(-50%, -50%);
-  }
-
-  .ambient-orb {
-    position: absolute;
-    border-radius: 999px;
-    filter: blur(90px);
-    opacity: 0.45;
-    animation: ambient-float 18s ease-in-out infinite alternate;
-  }
-
-  .ambient-orb-a {
-    top: -12rem;
-    right: 8%;
-    width: 32rem;
-    height: 32rem;
-    background: rgba(118, 94, 255, 0.18);
-  }
-
-  .ambient-orb-b {
-    bottom: -16rem;
-    left: -8rem;
-    width: 36rem;
-    height: 36rem;
-    background: rgba(64, 211, 244, 0.15);
-    animation-delay: -7s;
-  }
-
-  .ambient-orb-c {
-    top: 42%;
-    left: 42%;
-    width: 18rem;
-    height: 18rem;
-    background: rgba(185, 223, 255, 0.12);
-    animation-delay: -11s;
-  }
-
-  .ambient-particles {
-    position: absolute;
-    inset: 0;
-  }
-
-  .ambient-particle {
-    position: absolute;
-    border-radius: 999px;
-    background: rgba(188, 244, 255, 0.8);
-    box-shadow: 0 0 8px rgba(102, 226, 255, 0.75), 0 0 18px rgba(125, 93, 255, 0.3);
-    opacity: 0.26;
-    animation: particle-drift linear infinite;
-  }
-
-  .ambient-noise {
-    position: absolute;
-    inset: -50%;
-    opacity: 0.035;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.8'/%3E%3C/svg%3E");
-    animation: noise-shift 0.4s steps(2) infinite;
-  }
-
+  .ambient-environment::before,
+  .ambient-environment > *,
+  .ambient-grid,
+  .ambient-pointer-light,
+  .ambient-orb,
+  .ambient-particles,
+  .ambient-particle,
+  .ambient-noise,
   .ambient-vignette {
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(circle at center, transparent 45%, rgba(11, 17, 34, 0.08));
+    display: none !important;
   }
 
   /* VisionOS navigation */
