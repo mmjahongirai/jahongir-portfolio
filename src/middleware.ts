@@ -2,12 +2,12 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() ?? '';
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim() ?? '';
   const pathname = request.nextUrl.pathname;
-  const keyLooksValid = Boolean(key && key.startsWith('eyJ') && !key.startsWith('sb_publishable_'));
+  const configured = Boolean(url && key.startsWith('eyJ'));
 
-  if (!url || !keyLooksValid) {
+  if (!configured) {
     if (pathname !== '/admin/login') {
       return NextResponse.redirect(new URL('/admin/login?error=configuration', request.url));
     }
