@@ -84,7 +84,7 @@ export function ProjectsSection() {
                 </div>
               </div>
 
-              <div className="mt-auto pt-16">
+              <div className="mt-auto pt-8">
                 <span className="text-xs tracking-[0.2em] text-cyan-300/70">
                   PROJECT / {String(index + 1).padStart(2, '0')}
                 </span>

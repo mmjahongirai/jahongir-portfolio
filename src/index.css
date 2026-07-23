@@ -1473,14 +1473,15 @@
 
   /* Project constellation */
   .project-story {
-    min-height: 100vh;
+    min-height: auto;
   }
 
   .project-constellation {
     position: relative;
     display: grid;
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-    gap: clamp(1rem, 2vw, 1.8rem);
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(1.25rem, 2.5vw, 2rem);
     perspective: 1400px;
   }
 
@@ -1505,7 +1506,10 @@
   .floating-project-card {
     position: relative;
     display: flex;
-    min-height: 30rem;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    min-height: 22rem;
     flex-direction: column;
     overflow: hidden;
     padding: clamp(1.5rem, 3vw, 2.4rem);
@@ -1516,30 +1520,22 @@
     border-radius: clamp(1.6rem, 3vw, 2.6rem);
     box-shadow: var(--shadow-glass);
     backdrop-filter: blur(28px) saturate(145%);
+    -webkit-backdrop-filter: blur(28px) saturate(145%);
     transform-style: preserve-3d;
   }
 
+  /* Featured / first card — full row, never a thin vertical strip */
   .floating-project-card-1 {
-    grid-column: span 7;
-    min-height: 36rem;
+    grid-column: 1 / -1;
+    min-height: 24rem;
   }
 
-  .floating-project-card-2 {
-    grid-column: 8 / span 5;
-    min-height: 27rem;
-    margin-top: 7rem;
-  }
-
-  .floating-project-card-3 {
-    grid-column: 2 / span 5;
-    min-height: 29rem;
-    margin-top: 1rem;
-  }
-
+  .floating-project-card-2,
+  .floating-project-card-3,
   .floating-project-card-4 {
-    grid-column: 7 / span 6;
-    min-height: 34rem;
-    margin-top: -2rem;
+    grid-column: auto;
+    min-height: 22rem;
+    margin-top: 0;
   }
 
   .project-card-reflection {
@@ -1601,20 +1597,25 @@
   }
 
   .floating-project-card h3 {
-    max-width: 14ch;
+    max-width: 100%;
     margin-top: 0.8rem;
-    font-size: clamp(2rem, 4vw, 4rem);
+    font-size: clamp(1.75rem, 3.2vw, 3.25rem);
     font-weight: 590;
-    line-height: 0.98;
-    letter-spacing: -0.05em;
+    line-height: 1.05;
+    letter-spacing: -0.045em;
+    overflow-wrap: normal;
+    word-break: normal;
+    hyphens: none;
   }
 
   .floating-project-card p {
-    max-width: 36rem;
+    max-width: min(40rem, 100%);
     margin-top: 1.2rem;
     color: var(--text-secondary);
     font-size: 0.95rem;
     line-height: 1.7;
+    overflow-wrap: break-word;
+    word-break: normal;
   }
 
   .project-tag {
@@ -2079,8 +2080,8 @@
   .floating-project-card-2,
   .floating-project-card-3,
   .floating-project-card-4 {
-    grid-column: span 1;
-    min-height: 28rem;
+    grid-column: 1 / -1;
+    min-height: 22rem;
     margin-top: 0;
   }
 
@@ -2176,11 +2177,13 @@
   .floating-project-card-3,
   .floating-project-card-4 {
     grid-column: 1;
-    min-height: 25rem;
+    min-height: 20rem;
+    margin-top: 0;
   }
 
   .floating-project-card h3 {
-    font-size: 2.4rem;
+    font-size: clamp(1.6rem, 8vw, 2.4rem);
+    max-width: 100%;
   }
 
   .project-orbit-line {
