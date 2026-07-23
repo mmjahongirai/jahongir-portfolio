@@ -77,7 +77,7 @@ export function LeftEdgeNavigation() {
         transition={{ type: 'spring', stiffness: 310, damping: 27, mass: 0.72 }}
         onMouseEnter={reveal}
         onMouseLeave={scheduleHide}
-        className="vision-nav fixed left-0 top-[5.5rem] z-[100] hidden origin-top-left flex-col gap-2 p-2.5 lg:flex"
+        className="vision-nav glass-sticky-panel fixed left-0 top-[5.5rem] z-[100] hidden origin-top-left flex-col gap-2 p-2.5 lg:flex"
         aria-label="Primary navigation"
       >
         <div className="mb-1 flex h-11 w-11 items-center justify-center rounded-[1.1rem] bg-white/[0.07] text-cyan-300 shadow-inner shadow-white/10">
@@ -167,7 +167,7 @@ export function LeftEdgeNavigation() {
       <button
         type="button"
         onClick={() => setOpen(value => !value)}
-        className="vision-mobile-trigger lg:hidden"
+        className="vision-mobile-trigger glass-sticky-panel lg:hidden"
         aria-label={open ? 'Close navigation' : 'Open navigation'}
         aria-expanded={open}
       >
@@ -180,7 +180,7 @@ export function LeftEdgeNavigation() {
             initial={{ opacity: 0, y: 18, scale: 0.94 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 18, scale: 0.94 }}
-            className="vision-mobile-dock lg:hidden"
+            className="vision-mobile-dock glass-sticky-panel lg:hidden"
           >
             {navItems.map(({ label, href, icon: Icon }) => (
               <Link

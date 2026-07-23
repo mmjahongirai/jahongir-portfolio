@@ -26,8 +26,16 @@
     --shadow-md: 0 18px 44px rgba(52, 72, 108, 0.08);
     --shadow-lg: 0 32px 80px rgba(52, 72, 108, 0.12);
     --shadow-glass: 0 24px 60px rgba(52, 72, 108, 0.09);
-    --nav-bg: rgba(22, 31, 53, 0.7);
-    --nav-border: rgba(255, 255, 255, 0.14);
+    /* Telegram/Instagram-style frosted sticky panels (light) */
+    --nav-bg: rgba(255, 255, 255, 0.55);
+    --nav-bg-fallback: rgba(231, 235, 240, 0.94);
+    --nav-border: rgba(255, 255, 255, 0.72);
+    --nav-text: rgba(16, 23, 40, 0.88);
+    --nav-text-muted: rgba(16, 23, 40, 0.48);
+    --nav-text-active: #0f766e;
+    --nav-item-hover: rgba(15, 23, 42, 0.06);
+    --nav-shadow: 0 12px 40px rgba(52, 72, 108, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+    --nav-blur: blur(20px) saturate(180%);
   }
 
   .dark {
@@ -53,8 +61,16 @@
     --shadow-md: 0 22px 56px rgba(0, 0, 0, 0.25);
     --shadow-lg: 0 36px 100px rgba(0, 0, 0, 0.34);
     --shadow-glass: 0 28px 80px rgba(0, 0, 0, 0.28);
-    --nav-bg: rgba(11, 17, 33, 0.72);
-    --nav-border: rgba(176, 202, 255, 0.14);
+    /* Telegram/Instagram-style frosted sticky panels (dark) */
+    --nav-bg: rgba(14, 22, 33, 0.52);
+    --nav-bg-fallback: rgba(14, 22, 33, 0.92);
+    --nav-border: rgba(176, 202, 255, 0.16);
+    --nav-text: rgba(236, 246, 255, 0.9);
+    --nav-text-muted: rgba(218, 231, 247, 0.55);
+    --nav-text-active: #7ceaff;
+    --nav-item-hover: rgba(255, 255, 255, 0.075);
+    --nav-shadow: 0 28px 64px rgba(3, 9, 24, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    --nav-blur: blur(22px) saturate(170%);
   }
 
   * {
@@ -484,23 +500,88 @@
     display: none !important;
   }
 
-  /* VisionOS navigation */
+  /*
+   * Sticky/fixed glass panels — Telegram/Instagram frosted style
+   * Cross-browser: -webkit-backdrop-filter (Safari/iOS) + backdrop-filter
+   * Fallback: denser rgba when blur unsupported
+   */
+  .glass-sticky-panel {
+    color: var(--nav-text);
+    background-color: var(--nav-bg-fallback);
+    background-image: none;
+    border: 1px solid var(--nav-border);
+    box-shadow: var(--nav-shadow);
+    -webkit-backdrop-filter: var(--nav-blur);
+    backdrop-filter: var(--nav-blur);
+    transition:
+      background-color 0.35s ease,
+      border-color 0.35s ease,
+      color 0.35s ease,
+      box-shadow 0.35s ease;
+  }
+
+  @supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+    .glass-sticky-panel {
+      background-color: var(--nav-bg);
+      -webkit-backdrop-filter: var(--nav-blur);
+      backdrop-filter: var(--nav-blur);
+    }
+  }
+
+  @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+    .glass-sticky-panel {
+      background-color: var(--nav-bg-fallback);
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+  }
+
+  /* VisionOS navigation — fixed so content scrolls underneath */
   .vision-nav,
   .vision-mobile-trigger,
   .vision-mobile-dock,
-  .vision-mobile-lang {
-    color: rgba(236, 246, 255, 0.88);
-    background:
-      linear-gradient(145deg, rgba(255, 255, 255, 0.11), transparent 45%),
-      var(--nav-bg);
+  .vision-mobile-lang,
+  .vision-mobile-lang-trigger,
+  .vision-mobile-lang-menu,
+  .vision-language-popover {
+    color: var(--nav-text);
+    background-color: var(--nav-bg-fallback);
+    background-image: none;
     border: 1px solid var(--nav-border);
     border-radius: 1.65rem;
-    box-shadow: 0 28px 64px rgba(3, 9, 24, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.12);
-    backdrop-filter: blur(28px) saturate(145%);
-    -webkit-backdrop-filter: blur(28px) saturate(145%);
+    box-shadow: var(--nav-shadow);
+    -webkit-backdrop-filter: var(--nav-blur);
+    backdrop-filter: var(--nav-blur);
+  }
+
+  @supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+    .vision-nav,
+    .vision-mobile-trigger,
+    .vision-mobile-dock,
+    .vision-mobile-lang,
+    .vision-mobile-lang-trigger,
+    .vision-mobile-lang-menu,
+    .vision-language-popover {
+      background-color: var(--nav-bg);
+    }
+  }
+
+  @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+    .vision-nav,
+    .vision-mobile-trigger,
+    .vision-mobile-dock,
+    .vision-mobile-lang,
+    .vision-mobile-lang-trigger,
+    .vision-mobile-lang-menu,
+    .vision-language-popover {
+      background-color: var(--nav-bg-fallback);
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
   }
 
   .vision-nav {
+    position: fixed;
     width: 4.1rem;
     overflow: visible;
   }
@@ -522,15 +603,7 @@
     align-items: center;
     gap: 0.4rem;
     padding: 0.55rem 0.85rem;
-    color: rgba(236, 246, 255, 0.92);
-    background:
-      linear-gradient(145deg, rgba(255, 255, 255, 0.12), transparent 45%),
-      var(--nav-bg);
-    border: 1px solid var(--nav-border);
     border-radius: 999px;
-    box-shadow: 0 18px 40px rgba(3, 9, 24, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.12);
-    backdrop-filter: blur(28px) saturate(145%);
-    -webkit-backdrop-filter: blur(28px) saturate(145%);
     font-size: 0.72rem;
     font-weight: 700;
     letter-spacing: 0.08em;
@@ -540,22 +613,14 @@
     display: flex;
     gap: 0.25rem;
     padding: 0.35rem;
-    color: rgba(236, 246, 255, 0.88);
-    background:
-      linear-gradient(145deg, rgba(255, 255, 255, 0.11), transparent 45%),
-      var(--nav-bg);
-    border: 1px solid var(--nav-border);
     border-radius: 999px;
-    box-shadow: 0 18px 40px rgba(3, 9, 24, 0.28);
-    backdrop-filter: blur(28px) saturate(145%);
-    -webkit-backdrop-filter: blur(28px) saturate(145%);
   }
 
   .vision-mobile-lang-btn {
     min-width: 2.45rem;
     min-height: 2.2rem;
     padding: 0.4rem 0.6rem;
-    color: rgba(229, 239, 252, 0.62);
+    color: var(--nav-text-muted);
     border: 1px solid transparent;
     border-radius: 999px;
     font-size: 0.68rem;
@@ -565,6 +630,12 @@
   }
 
   .vision-mobile-lang-btn.is-active {
+    color: var(--nav-text-active);
+    background: rgba(34, 184, 214, 0.14);
+    border-color: rgba(34, 184, 214, 0.28);
+  }
+
+  .dark .vision-mobile-lang-btn.is-active {
     color: #d9fbff;
     background: rgba(86, 215, 247, 0.16);
     border-color: rgba(143, 236, 255, 0.28);
@@ -635,7 +706,7 @@
     min-width: 2.75rem;
     align-items: center;
     overflow: hidden;
-    color: rgba(218, 231, 247, 0.58);
+    color: var(--nav-text-muted);
     border: 1px solid transparent;
     border-radius: 1rem;
     transition: width 0.45s cubic-bezier(0.16, 1, 0.3, 1), color 0.3s ease, background 0.3s ease;
@@ -643,13 +714,18 @@
 
   .vision-nav-item:hover {
     width: 9.5rem;
-    color: #eafaff;
-    background: rgba(255, 255, 255, 0.075);
-    border-color: rgba(255, 255, 255, 0.08);
-    box-shadow: 0 8px 24px rgba(3, 9, 24, 0.18);
+    color: var(--nav-text);
+    background: var(--nav-item-hover);
+    border-color: var(--border-subtle);
+    box-shadow: var(--shadow-sm);
   }
 
   .vision-nav-item-active {
+    color: var(--nav-text-active);
+    background: rgba(34, 184, 214, 0.1);
+  }
+
+  .dark .vision-nav-item-active {
     color: #7ceaff;
     background: rgba(86, 215, 247, 0.08);
   }
@@ -659,6 +735,7 @@
     flex-shrink: 0;
     overflow: hidden;
     opacity: 0;
+    white-space: nowrap;
     font-size: 0.75rem;
     font-weight: 560;
     transition: width 0.42s ease, opacity 0.3s ease;
@@ -676,16 +753,12 @@
     display: flex;
     gap: 0.25rem;
     padding: 0.35rem;
-    background: var(--nav-bg);
-    border: 1px solid var(--nav-border);
     border-radius: 0.9rem;
-    box-shadow: var(--shadow-lg);
-    backdrop-filter: blur(24px);
   }
 
   .vision-language-button {
     padding: 0.45rem 0.55rem;
-    color: rgba(229, 239, 252, 0.58);
+    color: var(--nav-text-muted);
     border-radius: 0.6rem;
     font-size: 0.65rem;
     font-weight: 650;
