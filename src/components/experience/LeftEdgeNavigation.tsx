@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -37,9 +37,7 @@ export function LeftEdgeNavigation() {
   const { isDark, toggle } = useTheme();
   const [open, setOpen] = useState(false);
   const [languagesOpen, setLanguagesOpen] = useState(false);
-  const [mobileLangOpen, setMobileLangOpen] = useState(false);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const mobileLangRef = useRef<HTMLDivElement>(null);
   const isAdmin = pathname.startsWith('/admin');
 
   const reveal = () => {
@@ -53,17 +51,6 @@ export function LeftEdgeNavigation() {
       setLanguagesOpen(false);
     }, 320);
   };
-
-  useEffect(() => {
-    if (!mobileLangOpen) return;
-    const onPointerDown = (event: PointerEvent) => {
-      if (!mobileLangRef.current?.contains(event.target as Node)) {
-        setMobileLangOpen(false);
-      }
-    };
-    document.addEventListener('pointerdown', onPointerDown);
-    return () => document.removeEventListener('pointerdown', onPointerDown);
-  }, [mobileLangOpen]);
 
   if (isAdmin) return null;
 
@@ -176,51 +163,9 @@ export function LeftEdgeNavigation() {
         </button>
       </motion.aside>
 
-      {/* Mobile: always-visible language control (top-right) */}
-      <div ref={mobileLangRef} className="vision-mobile-lang lg:hidden">
-        <button
-          type="button"
-          className="vision-mobile-lang-trigger"
-          onClick={() => setMobileLangOpen(value => !value)}
-          aria-expanded={mobileLangOpen}
-          aria-label="Change language"
-        >
-          <Languages className="h-4 w-4" />
-          <span>{lang.toUpperCase()}</span>
-        </button>
-        <AnimatePresence>
-          {mobileLangOpen && (
-            <motion.div
-              initial={{ opacity: 0, y: -6, scale: 0.96 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -6, scale: 0.96 }}
-              className="vision-mobile-lang-menu"
-            >
-              {languages.map(language => (
-                <button
-                  key={language}
-                  type="button"
-                  onClick={() => {
-                    setLang(language);
-                    setMobileLangOpen(false);
-                  }}
-                  className={cn('vision-mobile-lang-btn', lang === language && 'is-active')}
-                  aria-pressed={lang === language}
-                >
-                  {language.toUpperCase()}
-                </button>
-              ))}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
       <button
         type="button"
-        onClick={() => {
-          setOpen(value => !value);
-          setMobileLangOpen(false);
-        }}
+        onClick={() => setOpen(value => !value)}
         className="vision-mobile-trigger lg:hidden"
         aria-label={open ? 'Close navigation' : 'Open navigation'}
         aria-expanded={open}
@@ -251,9 +196,8 @@ export function LeftEdgeNavigation() {
             <div className="my-1 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
 
             <div className="vision-mobile-dock-lang">
-              <div className="mb-2 flex items-center gap-2 px-2 text-xs font-semibold uppercase tracking-[0.14em] text-cyan-200/80">
-                <Languages className="h-3.5 w-3.5" />
-                Language / Til
+              <div className="mb-2 flex items-center justify-center px-2" aria-hidden="true">
+                <Languages className="h-4 w-4 text-cyan-200/90" />
               </div>
               <div className="flex items-center gap-1" role="group" aria-label="Language">
                 {languages.map(language => (

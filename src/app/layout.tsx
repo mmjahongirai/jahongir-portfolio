@@ -92,7 +92,7 @@ const themeScript = `
         apple.setAttribute('name', 'apple-mobile-web-app-status-bar-style');
         document.head.appendChild(apple);
       }
-      apple.setAttribute('content', 'black-translucent');
+      apple.setAttribute('content', dark ? 'black-translucent' : 'default');
     } catch (_) {}
   })();
 `;

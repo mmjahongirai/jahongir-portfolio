@@ -62,8 +62,8 @@ function syncThemeColorMeta(theme: Theme) {
     apple.setAttribute('name', 'apple-mobile-web-app-status-bar-style');
     head.appendChild(apple);
   }
-  // Always translucent so the site background (same as theme) shows behind the status icons
-  apple.setAttribute('content', 'black-translucent');
+  // Light: opaque bar matching theme-color. Dark: translucent over site bg.
+  apple.setAttribute('content', theme === 'dark' ? 'black-translucent' : 'default');
 
   document.documentElement.style.colorScheme = theme;
   document.documentElement.style.backgroundColor = color;
@@ -71,6 +71,10 @@ function syncThemeColorMeta(theme: Theme) {
   if (document.body) {
     document.body.style.backgroundColor = color;
   }
+
+  // Force Safari/Chrome to re-read theme-color on theme switch
+  primary.remove();
+  head.appendChild(primary);
 }
 
 function applyTheme(theme: Theme) {
