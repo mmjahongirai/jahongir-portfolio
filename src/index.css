@@ -4,6 +4,7 @@
 
 @layer base {
   :root {
+    color-scheme: light;
     --bg-primary: #f5f3ee;
     --chrome-bg: #f5f3ee;
     --bg-secondary: rgba(238, 241, 247, 0.76);
@@ -30,6 +31,7 @@
   }
 
   .dark {
+    color-scheme: dark;
     --bg-primary: #080c18;
     --chrome-bg: #080c18;
     --bg-secondary: rgba(15, 22, 40, 0.78);
@@ -105,6 +107,20 @@
     z-index: 1;
     height: max(env(safe-area-inset-top, 0px), 0px);
     min-height: env(safe-area-inset-top, 0px);
+    pointer-events: none;
+    background-color: var(--chrome-bg, var(--bg-primary));
+    transition: background-color 0.45s ease;
+  }
+
+  /* Home-indicator / bottom Safari toolbar edge — same theme paint */
+  .site-chrome-bleed-bottom {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1;
+    height: max(env(safe-area-inset-bottom, 0px), 0px);
+    min-height: env(safe-area-inset-bottom, 0px);
     pointer-events: none;
     background-color: var(--chrome-bg, var(--bg-primary));
     transition: background-color 0.45s ease;
@@ -456,19 +472,22 @@
     z-index: 0;
     overflow: hidden;
     pointer-events: none;
-    background:
+    /* Base = --chrome-bg so status/address bars and page edge match */
+    background-color: var(--chrome-bg, var(--bg-primary));
+    background-image:
       radial-gradient(circle at 15% 12%, rgba(89, 204, 241, 0.09), transparent 30rem),
       radial-gradient(circle at 83% 18%, rgba(121, 91, 255, 0.1), transparent 34rem),
-      linear-gradient(145deg, #f6f3ed 0%, #eef4f8 52%, #e8edf5 100%);
-    transition: background 0.5s ease;
+      linear-gradient(145deg, #f5f3ee 0%, #f0f2f6 52%, #eef1f6 100%);
+    transition: background-color 0.5s ease, background-image 0.5s ease;
   }
 
   .dark .ambient-environment {
-    background:
+    background-color: var(--chrome-bg, var(--bg-primary));
+    background-image:
       radial-gradient(circle at 12% 15%, rgba(0, 178, 220, 0.11), transparent 34rem),
       radial-gradient(circle at 82% 20%, rgba(112, 68, 255, 0.15), transparent 38rem),
       radial-gradient(circle at 45% 100%, rgba(39, 95, 174, 0.09), transparent 32rem),
-      linear-gradient(145deg, #070b15 0%, #0b1121 48%, #111326 100%);
+      linear-gradient(145deg, #080c18 0%, #0a1020 48%, #0d1424 100%);
   }
 
   .ambient-grid {

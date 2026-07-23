@@ -44,7 +44,7 @@ export async function generateMetadata(): Promise<Metadata> {
     manifest: '/manifest.webmanifest',
     appleWebApp: {
       capable: true,
-      statusBarStyle: 'black-translucent',
+      statusBarStyle: 'black',
       title: 'JahongirAI',
     },
     formatDetection: {
@@ -61,8 +61,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   viewportFit: 'cover',
-  colorScheme: 'dark light',
-  // Single default; runtime JS syncs this to the active site theme
+  // Do NOT set colorScheme: 'dark light' — Safari then tints chrome from the phone OS.
+  // Runtime script sets a single color-scheme + theme-color to the active site theme.
   themeColor: '#080c18',
 };
 
@@ -71,28 +71,34 @@ const themeScript = `
     try {
       var stored = localStorage.getItem('portfolio-theme-v2');
       var dark = stored ? stored === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+      var theme = dark ? 'dark' : 'light';
       var color = dark ? '#080c18' : '#f5f3ee';
+      var head = document.head;
       document.documentElement.classList.toggle('dark', dark);
-      document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+      document.documentElement.style.colorScheme = theme;
       document.documentElement.style.backgroundColor = color;
       document.documentElement.style.setProperty('--chrome-bg', color);
-      var meta = document.querySelector('meta[name="theme-color"]:not([media])');
-      if (!meta) {
-        meta = document.createElement('meta');
-        meta.setAttribute('name', 'theme-color');
-        document.head.appendChild(meta);
-      }
-      meta.setAttribute('content', color);
-      document.querySelectorAll('meta[name="theme-color"][media]').forEach(function (node) {
-        node.setAttribute('content', color);
-      });
+      document.documentElement.style.setProperty('--bg-primary', color);
+
+      head.querySelectorAll('meta[name="theme-color"]').forEach(function (node) { node.remove(); });
+      var themeColor = document.createElement('meta');
+      themeColor.setAttribute('name', 'theme-color');
+      themeColor.setAttribute('content', color);
+      head.appendChild(themeColor);
+
+      head.querySelectorAll('meta[name="color-scheme"]').forEach(function (node) { node.remove(); });
+      var scheme = document.createElement('meta');
+      scheme.setAttribute('name', 'color-scheme');
+      scheme.setAttribute('content', theme);
+      head.appendChild(scheme);
+
       var apple = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
       if (!apple) {
         apple = document.createElement('meta');
         apple.setAttribute('name', 'apple-mobile-web-app-status-bar-style');
-        document.head.appendChild(apple);
+        head.appendChild(apple);
       }
-      apple.setAttribute('content', dark ? 'black-translucent' : 'default');
+      apple.setAttribute('content', dark ? 'black' : 'default');
     } catch (_) {}
   })();
 `;

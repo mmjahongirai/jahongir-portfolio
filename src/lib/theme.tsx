@@ -4,6 +4,8 @@ import { createContext, useContext, useState, useCallback, useEffect, type React
 
 type Theme = 'dark' | 'light';
 const THEME_STORAGE_KEY = 'portfolio-theme-v2';
+
+/** Exact colors Safari/Chrome use for status + address bar chrome */
 export const THEME_COLORS = {
   light: '#f5f3ee',
   dark: '#080c18',
@@ -30,51 +32,63 @@ function getInitialTheme(): Theme {
   return getSystemTheme();
 }
 
-function syncThemeColorMeta(theme: Theme) {
+function upsertMeta(name: string, content: string, attributes?: Record<string, string>) {
+  const head = document.head;
+  let meta = head.querySelector<HTMLMetaElement>(`meta[name="${name}"]`);
+  if (!meta) {
+    meta = document.createElement('meta');
+    meta.setAttribute('name', name);
+    head.appendChild(meta);
+  }
+  if (attributes) {
+    Object.entries(attributes).forEach(([key, value]) => meta!.setAttribute(key, value));
+  }
+  meta.setAttribute('content', content);
+  return meta;
+}
+
+/**
+ * Force mobile browser chrome (status bar + bottom toolbar) to match site theme.
+ * Critical: do NOT leave media-based theme-color / dual color-scheme — Safari follows OS then.
+ */
+export function syncThemeColorMeta(theme: Theme) {
   const color = THEME_COLORS[theme];
   const head = document.head;
 
-  // One live theme-color meta — browsers paint chrome from this
-  let primary = head.querySelector<HTMLMetaElement>('meta[name="theme-color"]:not([media])');
-  if (!primary) {
-    primary = document.createElement('meta');
-    primary.setAttribute('name', 'theme-color');
-    head.appendChild(primary);
-  }
-  primary.setAttribute('content', color);
+  // Wipe every theme-color (including media variants Next may inject)
+  head.querySelectorAll('meta[name="theme-color"]').forEach(node => node.remove());
 
-  // Keep media variants in sync so OS preference cannot paint a mismatched bar
-  head.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"][media]').forEach(meta => {
-    meta.setAttribute('content', color);
-  });
+  const themeColor = document.createElement('meta');
+  themeColor.setAttribute('name', 'theme-color');
+  themeColor.setAttribute('content', color);
+  head.appendChild(themeColor);
 
-  let appleCapable = head.querySelector<HTMLMetaElement>('meta[name="apple-mobile-web-app-capable"]');
-  if (!appleCapable) {
-    appleCapable = document.createElement('meta');
-    appleCapable.setAttribute('name', 'apple-mobile-web-app-capable');
-    head.appendChild(appleCapable);
-  }
-  appleCapable.setAttribute('content', 'yes');
+  // Single scheme only — dual "dark light" makes Safari chrome follow the phone OS
+  head.querySelectorAll('meta[name="color-scheme"]').forEach(node => node.remove());
+  upsertMeta('color-scheme', theme);
 
-  let apple = head.querySelector<HTMLMetaElement>('meta[name="apple-mobile-web-app-status-bar-style"]');
-  if (!apple) {
-    apple = document.createElement('meta');
-    apple.setAttribute('name', 'apple-mobile-web-app-status-bar-style');
-    head.appendChild(apple);
-  }
-  // Light: opaque bar matching theme-color. Dark: translucent over site bg.
-  apple.setAttribute('content', theme === 'dark' ? 'black-translucent' : 'default');
+  upsertMeta('apple-mobile-web-app-capable', 'yes');
+  upsertMeta('mobile-web-app-capable', 'yes');
+  // opaque status bar in standalone; in-tab Safari still uses theme-color above
+  upsertMeta('apple-mobile-web-app-status-bar-style', theme === 'dark' ? 'black' : 'default');
 
-  document.documentElement.style.colorScheme = theme;
-  document.documentElement.style.backgroundColor = color;
-  document.documentElement.style.setProperty('--chrome-bg', color);
+  const root = document.documentElement;
+  root.style.colorScheme = theme;
+  root.style.backgroundColor = color;
+  root.style.setProperty('--chrome-bg', color);
+  root.style.setProperty('--bg-primary', color);
+
   if (document.body) {
     document.body.style.backgroundColor = color;
   }
 
-  // Force Safari/Chrome to re-read theme-color on theme switch
-  primary.remove();
-  head.appendChild(primary);
+  // Safari sometimes caches theme-color — nudge by re-append
+  requestAnimationFrame(() => {
+    const live = head.querySelector('meta[name="theme-color"]');
+    if (live?.parentNode) {
+      live.parentNode.appendChild(live);
+    }
+  });
 }
 
 function applyTheme(theme: Theme) {
@@ -107,6 +121,25 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
     media.addEventListener('change', handleChange);
     return () => media.removeEventListener('change', handleChange);
+  }, []);
+
+  // Re-sync after Next hydration (it may re-inject dual color-scheme / theme-color)
+  useEffect(() => {
+    const id = window.setTimeout(() => applyTheme(getInitialTheme()), 0);
+    const id2 = window.setTimeout(() => {
+      const stored = localStorage.getItem(THEME_STORAGE_KEY);
+      const current =
+        stored === 'light' || stored === 'dark'
+          ? stored
+          : document.documentElement.classList.contains('dark')
+            ? 'dark'
+            : 'light';
+      applyTheme(current);
+    }, 120);
+    return () => {
+      window.clearTimeout(id);
+      window.clearTimeout(id2);
+    };
   }, []);
 
   const setTheme = useCallback((next: Theme) => {
