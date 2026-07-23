@@ -1,31 +1,28 @@
 import { createBrowserClient } from '@supabase/ssr';
 
-function getSupabaseBrowserConfig() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
+/**
+ * Browser Supabase client.
+ * Uses JWT anon key (eyJ...). Do not use sb_publishable_ here.
+ * Avoid throwing at import-time so `next build` / Vercel can succeed
+ * even when env is injected only at runtime.
+ */
+const supabaseUrl =
+  process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() || 'https://placeholder.supabase.co';
+const supabaseKey =
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim() ||
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder';
 
-  if (!url || !key) {
-    throw new Error(
-      'Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY. Add them to .env.local (JWT anon key starting with eyJ...).',
+if (process.env.NODE_ENV === 'development') {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    console.warn(
+      '[supabase] Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local',
+    );
+  } else if (supabaseKey.startsWith('sb_publishable_')) {
+    console.warn(
+      '[supabase] NEXT_PUBLIC_SUPABASE_ANON_KEY must be the JWT anon key (eyJ...), not sb_publishable_...',
     );
   }
-
-  if (key.startsWith('sb_publishable_')) {
-    throw new Error(
-      'NEXT_PUBLIC_SUPABASE_ANON_KEY must be the legacy JWT anon key (eyJ...), not sb_publishable_...',
-    );
-  }
-
-  if (!key.startsWith('eyJ')) {
-    throw new Error(
-      'NEXT_PUBLIC_SUPABASE_ANON_KEY looks invalid. Use the anon public JWT from Supabase → Project Settings → API.',
-    );
-  }
-
-  return { url, key };
 }
-
-const { url: supabaseUrl, key: supabaseKey } = getSupabaseBrowserConfig();
 
 export const supabase = createBrowserClient(supabaseUrl, supabaseKey);
 
