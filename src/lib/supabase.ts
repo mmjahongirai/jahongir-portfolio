@@ -1,9 +1,31 @@
 import { createBrowserClient } from '@supabase/ssr';
 
-const supabaseUrl =
-  process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
-const supabaseKey =
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key';
+function getSupabaseBrowserConfig() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
+
+  if (!url || !key) {
+    throw new Error(
+      'Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY. Add them to .env.local (JWT anon key starting with eyJ...).',
+    );
+  }
+
+  if (key.startsWith('sb_publishable_')) {
+    throw new Error(
+      'NEXT_PUBLIC_SUPABASE_ANON_KEY must be the legacy JWT anon key (eyJ...), not sb_publishable_...',
+    );
+  }
+
+  if (!key.startsWith('eyJ')) {
+    throw new Error(
+      'NEXT_PUBLIC_SUPABASE_ANON_KEY looks invalid. Use the anon public JWT from Supabase → Project Settings → API.',
+    );
+  }
+
+  return { url, key };
+}
+
+const { url: supabaseUrl, key: supabaseKey } = getSupabaseBrowserConfig();
 
 export const supabase = createBrowserClient(supabaseUrl, supabaseKey);
 
