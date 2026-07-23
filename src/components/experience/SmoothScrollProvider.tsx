@@ -3,16 +3,10 @@
 import { type ReactNode, useEffect } from 'react';
 import Lenis from 'lenis';
 
-/**
- * Smooth scroll on desktop only.
- * On phones, native scroll is required so Safari/Chrome can use
- * translucent top/bottom chrome (Google Search style) while content scrolls underneath.
- */
 export function SmoothScrollProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const nativeMobileChrome = window.matchMedia('(hover: none), (max-width: 1024px)').matches;
-    if (reduceMotion || nativeMobileChrome) return;
+    if (reduceMotion) return;
 
     const lenis = new Lenis({
       duration: 1.15,

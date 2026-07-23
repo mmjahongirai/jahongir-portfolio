@@ -6,8 +6,8 @@ type Theme = 'dark' | 'light';
 const THEME_STORAGE_KEY = 'portfolio-theme-v2';
 
 /**
- * ONE canvas color per mode. theme-color matches so Safari/Chrome can frost
- * translucent top/bottom bars over the page (Google Search style).
+ * ONE solid canvas color per mode (Telegram / Instagram style).
+ * Must equal html/body/--chrome-bg/theme-color exactly — no middle tint.
  */
 export const THEME_COLORS = {
   light: '#e7ebf0',
@@ -83,7 +83,7 @@ export function syncThemeColorMeta(theme: Theme) {
 
     ensure('apple-mobile-web-app-capable', 'yes');
     ensure('mobile-web-app-capable', 'yes');
-    // black-translucent: status bar is clear; page shows through (frosted by Safari)
+    // Translucent status bar → clock sits ON the same canvas color (Telegram-style)
     ensure('apple-mobile-web-app-status-bar-style', 'black-translucent');
     ensure('msapplication-TileColor', color);
 
