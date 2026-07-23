@@ -5,10 +5,14 @@ import { createContext, useContext, useState, useCallback, useEffect, type React
 type Theme = 'dark' | 'light';
 const THEME_STORAGE_KEY = 'portfolio-theme-v2';
 
-/** Exact colors Safari/Chrome use for status + address bar chrome */
+/**
+ * Canvas + browser chrome must share these exact hex values.
+ * Light = cool paper (matches page). Dark = navy (not near-black).
+ * Safari/Chrome theme-color paints status + address bars from this.
+ */
 export const THEME_COLORS = {
-  light: '#f5f3ee',
-  dark: '#080c18',
+  light: '#eef2f7',
+  dark: '#0b1220',
 } as const;
 
 type ThemeContextType = {
@@ -32,67 +36,89 @@ function getInitialTheme(): Theme {
   return getSystemTheme();
 }
 
-function upsertMeta(name: string, content: string, attributes?: Record<string, string>) {
-  const head = document.head;
-  let meta = head.querySelector<HTMLMetaElement>(`meta[name="${name}"]`);
-  if (!meta) {
-    meta = document.createElement('meta');
-    meta.setAttribute('name', name);
-    head.appendChild(meta);
-  }
-  if (attributes) {
-    Object.entries(attributes).forEach(([key, value]) => meta!.setAttribute(key, value));
-  }
-  meta.setAttribute('content', content);
-  return meta;
+function currentThemeFromDom(): Theme {
+  return document.documentElement.classList.contains('dark') ? 'dark' : 'light';
 }
 
 /**
- * Force mobile browser chrome (status bar + bottom toolbar) to match site theme.
- * Critical: do NOT leave media-based theme-color / dual color-scheme — Safari follows OS then.
+ * Keep Safari + Chrome (Android/iOS) toolbars locked to the site canvas color.
+ * Dual color-scheme / media theme-color metas make chrome follow the phone OS instead.
  */
 export function syncThemeColorMeta(theme: Theme) {
   const color = THEME_COLORS[theme];
   const head = document.head;
+  const syncing = (window as Window & { __chromeSyncing?: boolean });
+  if (syncing.__chromeSyncing) return;
+  syncing.__chromeSyncing = true;
 
-  // Wipe every theme-color (including media variants Next may inject)
-  head.querySelectorAll('meta[name="theme-color"]').forEach(node => node.remove());
+  try {
+    head.querySelectorAll('meta[name="theme-color"]').forEach(node => node.remove());
+    head.querySelectorAll('meta[name="color-scheme"]').forEach(node => node.remove());
 
-  const themeColor = document.createElement('meta');
-  themeColor.setAttribute('name', 'theme-color');
-  themeColor.setAttribute('content', color);
-  head.appendChild(themeColor);
+    const themeColor = document.createElement('meta');
+    themeColor.setAttribute('name', 'theme-color');
+    themeColor.setAttribute('content', color);
+    head.appendChild(themeColor);
 
-  // Single scheme only — dual "dark light" makes Safari chrome follow the phone OS
-  head.querySelectorAll('meta[name="color-scheme"]').forEach(node => node.remove());
-  upsertMeta('color-scheme', theme);
+    const scheme = document.createElement('meta');
+    scheme.setAttribute('name', 'color-scheme');
+    scheme.setAttribute('content', theme);
+    head.appendChild(scheme);
 
-  upsertMeta('apple-mobile-web-app-capable', 'yes');
-  upsertMeta('mobile-web-app-capable', 'yes');
-  // opaque status bar in standalone; in-tab Safari still uses theme-color above
-  upsertMeta('apple-mobile-web-app-status-bar-style', theme === 'dark' ? 'black' : 'default');
-
-  const root = document.documentElement;
-  root.style.colorScheme = theme;
-  root.style.backgroundColor = color;
-  root.style.setProperty('--chrome-bg', color);
-  root.style.setProperty('--bg-primary', color);
-
-  if (document.body) {
-    document.body.style.backgroundColor = color;
-  }
-
-  // Safari sometimes caches theme-color — nudge by re-append
-  requestAnimationFrame(() => {
-    const live = head.querySelector('meta[name="theme-color"]');
-    if (live?.parentNode) {
-      live.parentNode.appendChild(live);
+    let appleCapable = head.querySelector<HTMLMetaElement>('meta[name="apple-mobile-web-app-capable"]');
+    if (!appleCapable) {
+      appleCapable = document.createElement('meta');
+      appleCapable.setAttribute('name', 'apple-mobile-web-app-capable');
+      head.appendChild(appleCapable);
     }
-  });
+    appleCapable.setAttribute('content', 'yes');
+
+    let mobileCapable = head.querySelector<HTMLMetaElement>('meta[name="mobile-web-app-capable"]');
+    if (!mobileCapable) {
+      mobileCapable = document.createElement('meta');
+      mobileCapable.setAttribute('name', 'mobile-web-app-capable');
+      head.appendChild(mobileCapable);
+    }
+    mobileCapable.setAttribute('content', 'yes');
+
+    let appleBar = head.querySelector<HTMLMetaElement>('meta[name="apple-mobile-web-app-status-bar-style"]');
+    if (!appleBar) {
+      appleBar = document.createElement('meta');
+      appleBar.setAttribute('name', 'apple-mobile-web-app-status-bar-style');
+      head.appendChild(appleBar);
+    }
+    appleBar.setAttribute('content', theme === 'dark' ? 'black-translucent' : 'default');
+
+    let tile = head.querySelector<HTMLMetaElement>('meta[name="msapplication-TileColor"]');
+    if (!tile) {
+      tile = document.createElement('meta');
+      tile.setAttribute('name', 'msapplication-TileColor');
+      head.appendChild(tile);
+    }
+    tile.setAttribute('content', color);
+
+    const root = document.documentElement;
+    root.classList.toggle('dark', theme === 'dark');
+    root.style.colorScheme = theme;
+    root.style.backgroundColor = color;
+    root.style.setProperty('--chrome-bg', color);
+    root.style.setProperty('--bg-primary', color);
+
+    if (document.body) {
+      document.body.style.backgroundColor = color;
+    }
+
+    requestAnimationFrame(() => {
+      const live = head.querySelector('meta[name="theme-color"]');
+      if (live?.parentNode) live.parentNode.appendChild(live);
+      syncing.__chromeSyncing = false;
+    });
+  } catch {
+    syncing.__chromeSyncing = false;
+  }
 }
 
 function applyTheme(theme: Theme) {
-  document.documentElement.classList.toggle('dark', theme === 'dark');
   syncThemeColorMeta(theme);
 }
 
@@ -123,22 +149,39 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     return () => media.removeEventListener('change', handleChange);
   }, []);
 
-  // Re-sync after Next hydration (it may re-inject dual color-scheme / theme-color)
+  // Re-assert after hydration / bfcache / tab focus (Next may reinject metas)
   useEffect(() => {
-    const id = window.setTimeout(() => applyTheme(getInitialTheme()), 0);
-    const id2 = window.setTimeout(() => {
-      const stored = localStorage.getItem(THEME_STORAGE_KEY);
-      const current =
-        stored === 'light' || stored === 'dark'
-          ? stored
-          : document.documentElement.classList.contains('dark')
-            ? 'dark'
-            : 'light';
-      applyTheme(current);
-    }, 120);
+    const resync = () => applyTheme(getInitialTheme());
+
+    const t0 = window.setTimeout(resync, 0);
+    const t1 = window.setTimeout(() => applyTheme(currentThemeFromDom()), 150);
+    const t2 = window.setTimeout(() => applyTheme(currentThemeFromDom()), 600);
+
+    const onShow = () => applyTheme(currentThemeFromDom());
+    window.addEventListener('pageshow', onShow);
+    document.addEventListener('visibilitychange', onShow);
+
+    const observer = new MutationObserver(() => {
+      const metas = document.head.querySelectorAll('meta[name="theme-color"]');
+      const schemes = document.head.querySelectorAll('meta[name="color-scheme"]');
+      const color = THEME_COLORS[currentThemeFromDom()];
+      const themeMetaOk =
+        metas.length === 1 &&
+        !metas[0].hasAttribute('media') &&
+        metas[0].getAttribute('content')?.toLowerCase() === color;
+      const schemeOk =
+        schemes.length === 1 && schemes[0].getAttribute('content') === currentThemeFromDom();
+      if (!themeMetaOk || !schemeOk) applyTheme(currentThemeFromDom());
+    });
+    observer.observe(document.head, { childList: true, subtree: true, attributes: true });
+
     return () => {
-      window.clearTimeout(id);
-      window.clearTimeout(id2);
+      window.clearTimeout(t0);
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+      window.removeEventListener('pageshow', onShow);
+      document.removeEventListener('visibilitychange', onShow);
+      observer.disconnect();
     };
   }, []);
 

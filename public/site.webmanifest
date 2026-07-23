@@ -4,8 +4,8 @@
   "description": "Accountant · Data Analyst · AI Developer",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#080c18",
-  "theme_color": "#080c18",
+  "background_color": "#0b1220",
+  "theme_color": "#0b1220",
   "icons": [
     {
       "src": "/favicon-192.png",
