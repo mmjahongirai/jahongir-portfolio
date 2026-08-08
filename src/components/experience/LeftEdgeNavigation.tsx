@@ -18,6 +18,7 @@ import {
   X,
 } from 'lucide-react';
 import { useLanguage } from '@/lib/language';
+import { scrollToSection } from '@/lib/scroll';
 import { useTheme } from '@/lib/theme';
 import { cn } from '@/lib/utils';
 
@@ -50,6 +51,19 @@ export function LeftEdgeNavigation() {
       setOpen(false);
       setLanguagesOpen(false);
     }, 320);
+  };
+
+  const handleSectionNav = (event: React.MouseEvent<HTMLAnchorElement>, id: string) => {
+    // Already on the long homepage: scroll immediately (Link hash alone often no-ops).
+    if (pathname === '/') {
+      event.preventDefault();
+      scrollToSection(id);
+      setOpen(false);
+      return;
+    }
+
+    // From /blog or /blog/[slug]: allow route change; SmoothScrollProvider applies hash.
+    setOpen(false);
   };
 
   if (isAdmin) return null;
@@ -90,6 +104,7 @@ export function LeftEdgeNavigation() {
             <Link
               key={id}
               href={href}
+              onClick={event => handleSectionNav(event, id)}
               className={cn('vision-nav-item group', active && 'vision-nav-item-active')}
               aria-label={label}
             >
@@ -182,11 +197,11 @@ export function LeftEdgeNavigation() {
             exit={{ opacity: 0, y: 18, scale: 0.94 }}
             className="vision-mobile-dock glass-sticky-panel lg:hidden"
           >
-            {navItems.map(({ label, href, icon: Icon }) => (
+            {navItems.map(({ label, href, icon: Icon, id }) => (
               <Link
                 key={label}
                 href={href}
-                onClick={() => setOpen(false)}
+                onClick={event => handleSectionNav(event, id)}
                 className="flex min-h-11 items-center gap-3 rounded-xl px-3 py-2 text-sm"
               >
                 <Icon className="h-4 w-4" />

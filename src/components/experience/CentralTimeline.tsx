@@ -18,6 +18,7 @@ import {
   useSpring,
   useTransform,
 } from 'framer-motion';
+import { scrollToSection } from '@/lib/scroll';
 import { cn } from '@/lib/utils';
 
 type TimelineItem = {
@@ -102,10 +103,9 @@ export function CentralTimeline() {
   }, [pathname]);
 
   const navigate = (event: React.MouseEvent<HTMLAnchorElement>, id: string) => {
-    const section = document.getElementById(id);
-    if (!section) return;
+    if (pathname !== '/') return;
     event.preventDefault();
-    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    scrollToSection(id);
   };
 
   return (
