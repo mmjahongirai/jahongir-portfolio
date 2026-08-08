@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   BookOpen,
   Home,
@@ -18,7 +18,7 @@ import {
   useSpring,
   useTransform,
 } from 'framer-motion';
-import { scrollToSection } from '@/lib/scroll';
+import { scrollToSection, setPendingSection } from '@/lib/scroll';
 import { cn } from '@/lib/utils';
 
 type TimelineItem = {
@@ -40,6 +40,7 @@ const TIMELINE_PATH = 'M 50 0 L 50 100';
 
 export function CentralTimeline() {
   const pathname = usePathname();
+  const router = useRouter();
   const { scrollYProgress } = useScroll();
   const progress = useSpring(scrollYProgress, {
     stiffness: 110,
@@ -103,9 +104,13 @@ export function CentralTimeline() {
   }, [pathname]);
 
   const navigate = (event: React.MouseEvent<HTMLAnchorElement>, id: string) => {
-    if (pathname !== '/') return;
     event.preventDefault();
-    scrollToSection(id);
+    if (pathname === '/') {
+      scrollToSection(id);
+      return;
+    }
+    setPendingSection(id);
+    router.push(`/#${id}`);
   };
 
   return (

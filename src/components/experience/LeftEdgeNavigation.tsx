@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Contact,
@@ -18,7 +18,7 @@ import {
   X,
 } from 'lucide-react';
 import { useLanguage } from '@/lib/language';
-import { scrollToSection } from '@/lib/scroll';
+import { scrollToSection, setPendingSection } from '@/lib/scroll';
 import { useTheme } from '@/lib/theme';
 import { cn } from '@/lib/utils';
 
@@ -34,6 +34,7 @@ const languages = ['en', 'ru', 'uz'] as const;
 
 export function LeftEdgeNavigation() {
   const pathname = usePathname();
+  const router = useRouter();
   const { lang, setLang } = useLanguage();
   const { isDark, toggle } = useTheme();
   const [open, setOpen] = useState(false);
@@ -54,16 +55,17 @@ export function LeftEdgeNavigation() {
   };
 
   const handleSectionNav = (event: React.MouseEvent<HTMLAnchorElement>, id: string) => {
-    // Already on the long homepage: scroll immediately (Link hash alone often no-ops).
+    event.preventDefault();
+    setOpen(false);
+
     if (pathname === '/') {
-      event.preventDefault();
       scrollToSection(id);
-      setOpen(false);
       return;
     }
 
-    // From /blog or /blog/[slug]: allow route change; SmoothScrollProvider applies hash.
-    setOpen(false);
+    // Leave /blog or /blog/[slug], then SmoothScrollProvider scrolls to the section.
+    setPendingSection(id);
+    router.push(`/#${id}`);
   };
 
   if (isAdmin) return null;

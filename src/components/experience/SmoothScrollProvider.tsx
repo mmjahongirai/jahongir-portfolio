@@ -3,10 +3,16 @@
 import { type ReactNode, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Lenis from 'lenis';
-import { scrollToHash } from '@/lib/scroll';
+import { consumePendingSection, scrollToSection, scrollToSectionWhenReady } from '@/lib/scroll';
 
 export function SmoothScrollProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+
+  useEffect(() => {
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+  }, []);
 
   useEffect(() => {
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -17,6 +23,7 @@ export function SmoothScrollProvider({ children }: { children: ReactNode }) {
       smoothWheel: true,
       wheelMultiplier: 0.85,
       touchMultiplier: 1.1,
+      autoRaf: false,
     });
     window.__lenis = lenis;
 
@@ -34,17 +41,31 @@ export function SmoothScrollProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // After route changes (e.g. /blog/[slug] → /#home), apply the hash scroll.
+  // After route changes (e.g. /blog/[slug] → /), apply pending/hash scroll and beat scroll restoration.
   useEffect(() => {
     if (pathname !== '/') return;
 
-    const run = () => scrollToHash('smooth');
-    const timer = window.setTimeout(run, 80);
-    const onHashChange = () => scrollToHash('smooth');
+    const pending = consumePendingSection();
+    const hash = window.location.hash.replace(/^#/, '');
+    const target = pending || hash || 'home';
+
+    const run = (behavior: ScrollBehavior = 'smooth') => {
+      scrollToSection(target, behavior);
+    };
+
+    run('auto');
+    const timers = [80, 200, 450, 800].map(delay =>
+      window.setTimeout(() => run(delay < 200 ? 'auto' : 'smooth'), delay),
+    );
+
+    const onHashChange = () => {
+      const next = window.location.hash.replace(/^#/, '');
+      if (next) scrollToSectionWhenReady(next, 'smooth');
+    };
     window.addEventListener('hashchange', onHashChange);
 
     return () => {
-      window.clearTimeout(timer);
+      timers.forEach(timer => window.clearTimeout(timer));
       window.removeEventListener('hashchange', onHashChange);
     };
   }, [pathname]);
