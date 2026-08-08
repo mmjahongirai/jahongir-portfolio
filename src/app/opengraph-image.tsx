@@ -27,7 +27,7 @@ export default function OpenGraphImage() {
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', fontSize: 82, fontWeight: 700, lineHeight: 0.9, letterSpacing: -5 }}>
           <span>JAHONGIR MURTAZAEV</span>
-          <span style={{ color: '#a7b6cf' }}>MUKHTORKHON UGLI</span>
+          <span>MUKHTORKHON UGLI</span>
         </div>
         <div style={{ display: 'flex', fontSize: 25, color: '#aebbd1' }}>
           Transforming ideas into intelligent digital solutions.

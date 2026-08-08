@@ -855,14 +855,6 @@
     white-space: nowrap;
   }
 
-  .future-hero-title-line-sub {
-    margin-top: 0.12em;
-    color: color-mix(in srgb, var(--text-primary) 72%, var(--text-muted));
-    font-size: 0.78em;
-    font-weight: 600;
-    letter-spacing: -0.03em;
-  }
-
   .future-role {
     display: flex;
     min-height: 2.5rem;

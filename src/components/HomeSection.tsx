@@ -69,11 +69,8 @@ export function HomeSection() {
           transition={{ duration: 1, delay: 0.18, ease: EASE }}
           className="future-hero-title"
         >
-          {titleLines.map((line, index) => (
-            <span
-              key={line}
-              className={index === 0 ? 'future-hero-title-line' : 'future-hero-title-line future-hero-title-line-sub'}
-            >
+          {titleLines.map(line => (
+            <span key={line} className="future-hero-title-line">
               {line}
             </span>
           ))}
