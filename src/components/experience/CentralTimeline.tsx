@@ -110,7 +110,7 @@ export function CentralTimeline() {
       return;
     }
     setPendingSection(id);
-    router.push(`/#${id}`);
+    router.push('/');
   };
 
   return (
@@ -145,6 +145,7 @@ export function CentralTimeline() {
             <span className="timeline-connector timeline-connector-left" aria-hidden="true" />
             <Link
               href={`/#${id}`}
+              scroll={false}
               onClick={event => navigate(event, id)}
               className="energy-timeline-node"
               aria-label={`Go to ${label}`}

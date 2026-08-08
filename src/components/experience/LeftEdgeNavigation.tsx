@@ -28,7 +28,7 @@ const navItems = [
   { label: 'Projects', href: '/#projects', icon: Layers3, id: 'projects' },
   { label: 'Blog', href: '/#blog', icon: Newspaper, id: 'blog' },
   { label: 'Contact', href: '/#contact', icon: Contact, id: 'contact' },
-];
+] as const;
 
 const languages = ['en', 'ru', 'uz'] as const;
 
@@ -41,6 +41,7 @@ export function LeftEdgeNavigation() {
   const [languagesOpen, setLanguagesOpen] = useState(false);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isAdmin = pathname.startsWith('/admin');
+  const onHome = pathname === '/';
 
   const reveal = () => {
     if (closeTimer.current) clearTimeout(closeTimer.current);
@@ -56,16 +57,18 @@ export function LeftEdgeNavigation() {
 
   const handleSectionNav = (event: React.MouseEvent<HTMLAnchorElement>, id: string) => {
     event.preventDefault();
+    event.stopPropagation();
     setOpen(false);
+    setLanguagesOpen(false);
 
-    if (pathname === '/') {
+    if (onHome) {
       scrollToSection(id);
       return;
     }
 
-    // Leave /blog or /blog/[slug], then SmoothScrollProvider scrolls to the section.
+    // Real App Router navigation to `/` (never hash-only / pushState fakes).
     setPendingSection(id);
-    router.push(`/#${id}`);
+    router.push('/');
   };
 
   if (isAdmin) return null;
@@ -75,8 +78,9 @@ export function LeftEdgeNavigation() {
       <div className="site-chrome-bleed" aria-hidden="true" />
       <div className="site-chrome-bleed-bottom" aria-hidden="true" />
 
+      {/* Full-height hover strip so the menu is reachable on every page, including /blog/[slug]. */}
       <div
-        className="vision-edge-sensor fixed left-0 top-16 z-[90] hidden h-[34rem] w-7 lg:block"
+        className="vision-edge-sensor fixed inset-y-0 left-0 z-[220] hidden w-5 lg:block"
         onMouseEnter={reveal}
         aria-hidden="true"
       >
@@ -86,26 +90,28 @@ export function LeftEdgeNavigation() {
       <motion.aside
         initial={false}
         animate={{
-          x: open ? 18 : -92,
-          opacity: open ? 1 : 0,
-          scale: open ? 1 : 0.94,
+          x: open ? 18 : -58,
+          opacity: open ? 1 : 0.72,
+          scale: open ? 1 : 0.96,
         }}
         transition={{ type: 'spring', stiffness: 310, damping: 27, mass: 0.72 }}
         onMouseEnter={reveal}
         onMouseLeave={scheduleHide}
-        className="vision-nav glass-sticky-panel fixed left-0 top-[5.5rem] z-[100] hidden origin-top-left flex-col gap-2 p-2.5 lg:flex"
+        className="vision-nav glass-sticky-panel fixed left-0 top-[5.5rem] z-[221] hidden origin-top-left flex-col gap-2 p-2.5 lg:flex"
         aria-label="Primary navigation"
+        data-nav-open={open ? 'true' : 'false'}
       >
         <div className="mb-1 flex h-11 w-11 items-center justify-center rounded-[1.1rem] bg-white/[0.07] text-cyan-300 shadow-inner shadow-white/10">
           <Sparkles className="h-4.5 w-4.5" />
         </div>
 
         {navItems.map(({ label, href, icon: Icon, id }) => {
-          const active = pathname === '/' ? id === 'home' : pathname.startsWith(`/${id}`);
+          const active = onHome ? id === 'home' : pathname.startsWith(`/${id}`);
           return (
             <Link
               key={id}
               href={href}
+              scroll={false}
               onClick={event => handleSectionNav(event, id)}
               className={cn('vision-nav-item group', active && 'vision-nav-item-active')}
               aria-label={label}
@@ -184,7 +190,7 @@ export function LeftEdgeNavigation() {
       <button
         type="button"
         onClick={() => setOpen(value => !value)}
-        className="vision-mobile-trigger glass-sticky-panel lg:hidden"
+        className="vision-mobile-trigger glass-sticky-panel z-[221] lg:hidden"
         aria-label={open ? 'Close navigation' : 'Open navigation'}
         aria-expanded={open}
       >
@@ -197,12 +203,13 @@ export function LeftEdgeNavigation() {
             initial={{ opacity: 0, y: 18, scale: 0.94 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 18, scale: 0.94 }}
-            className="vision-mobile-dock glass-sticky-panel lg:hidden"
+            className="vision-mobile-dock glass-sticky-panel z-[221] lg:hidden"
           >
             {navItems.map(({ label, href, icon: Icon, id }) => (
               <Link
                 key={label}
                 href={href}
+                scroll={false}
                 onClick={event => handleSectionNav(event, id)}
                 className="flex min-h-11 items-center gap-3 rounded-xl px-3 py-2 text-sm"
               >

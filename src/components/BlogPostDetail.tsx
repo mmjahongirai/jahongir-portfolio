@@ -72,14 +72,14 @@ export function BlogPostDetail({ slug }: { slug: string }) {
   }
 
   return (
-    <div className="min-h-screen bg-surface-primary">
-      <div className="absolute inset-0 grid-bg opacity-30 pointer-events-none" />
+    <div className="relative min-h-screen bg-surface-primary">
+      <div className="pointer-events-none absolute inset-0 grid-bg opacity-30" aria-hidden="true" />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, ease: EASING }}
-        className="relative max-container section-padding pt-28 md:pt-32"
+        className="relative z-10 max-container section-padding pt-28 md:pt-32"
       >
         <Link href="/blog" className="inline-flex items-center gap-2 text-sm text-content-tertiary hover:text-accent-yellow transition-colors mb-10">
           <ArrowLeft className="w-4 h-4" />

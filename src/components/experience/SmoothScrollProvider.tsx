@@ -41,7 +41,7 @@ export function SmoothScrollProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // After route changes (e.g. /blog/[slug] → /), apply pending/hash scroll and beat scroll restoration.
+  // After a real route change to `/` (from /blog/[slug], etc.), scroll to the pending section.
   useEffect(() => {
     if (pathname !== '/') return;
 

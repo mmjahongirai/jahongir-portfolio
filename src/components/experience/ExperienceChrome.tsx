@@ -21,8 +21,9 @@ export function ExperienceChrome() {
   return (
     <>
       {!isAdmin && <AmbientEnvironment />}
+      {/* Timeline + edge nav mount on every public route, including /blog and /blog/[slug]. */}
       {!isAdmin && <CentralTimeline />}
-      <LeftEdgeNavigation />
+      {!isAdmin && <LeftEdgeNavigation />}
     </>
   );
 }

@@ -675,9 +675,14 @@
     pointer-events: auto;
   }
 
+  .vision-nav[data-nav-open='false'] {
+    /* Keep a visible peek so blog/detail pages still show the rail exists */
+    pointer-events: auto;
+  }
+
   .vision-edge-trigger {
     position: absolute;
-    top: 2.2rem;
+    top: 42%;
     left: 0;
     width: 4px;
     height: 4.5rem;

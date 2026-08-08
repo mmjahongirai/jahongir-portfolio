@@ -36,21 +36,29 @@ function preferReducedMotion() {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
+/** Only rewrite the hash while already on the homepage — never fake a `/` route via pushState. */
+function syncHomeHash(id: string) {
+  if (window.location.pathname !== '/') return;
+  const next = `/#${id}`;
+  if (`${window.location.pathname}${window.location.hash}` === next) return;
+  window.history.pushState(null, '', next);
+}
+
 export function scrollToSection(id: string, behavior: ScrollBehavior = 'smooth') {
+  // Guard: scrolling/hash updates belong on the long homepage only.
+  if (window.location.pathname !== '/') return false;
+
   const smooth = behavior === 'smooth' && !preferReducedMotion();
   const lenis = window.__lenis;
   lenis?.resize?.();
 
-  // Home: always pin to absolute top — more reliable than element offset with Lenis.
   if (id === 'home') {
     if (lenis) {
       lenis.scrollTo(0, { offset: 0, duration: smooth ? 1.15 : 0, immediate: !smooth, force: true });
     } else {
       window.scrollTo({ top: 0, left: 0, behavior: smooth ? 'smooth' : 'auto' });
     }
-    if (window.location.hash !== '#home') {
-      window.history.pushState(null, '', '/#home');
-    }
+    syncHomeHash('home');
     return true;
   }
 
@@ -65,10 +73,7 @@ export function scrollToSection(id: string, behavior: ScrollBehavior = 'smooth')
     window.scrollTo({ top, left: 0, behavior: smooth ? 'smooth' : 'auto' });
   }
 
-  if (window.location.hash !== `#${id}`) {
-    window.history.pushState(null, '', `/#${id}`);
-  }
-
+  syncHomeHash(id);
   return true;
 }
 
