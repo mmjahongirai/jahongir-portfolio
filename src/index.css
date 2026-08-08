@@ -836,10 +836,10 @@
   .future-hero-title {
     width: 100%;
     max-width: 100%;
-    /* Fits longest word (MUKHTORKHON ≈ 11ch) on any viewport */
-    font-size: clamp(1.45rem, min(10.2cqi, calc((100vw - 7rem) / 11.8)), 5.1rem);
+    /* Fits "JAHONGIR MURTAZAEV" (~18ch) across viewports */
+    font-size: clamp(1.35rem, min(8.6cqi, calc((100vw - 7rem) / 16.5)), 4.35rem);
     font-weight: 640;
-    line-height: 0.9;
+    line-height: 0.94;
     letter-spacing: -0.045em;
   }
 
@@ -848,6 +848,14 @@
     width: max-content;
     max-width: 100%;
     white-space: nowrap;
+  }
+
+  .future-hero-title-line-sub {
+    margin-top: 0.12em;
+    color: color-mix(in srgb, var(--text-primary) 72%, var(--text-muted));
+    font-size: 0.78em;
+    font-weight: 600;
+    letter-spacing: -0.03em;
   }
 
   .future-role {
@@ -2006,7 +2014,7 @@
   }
 
   .future-hero-title {
-    font-size: clamp(1.4rem, min(11cqi, calc((100vw - 5.5rem) / 11.8)), 3.8rem);
+    font-size: clamp(1.25rem, min(9.2cqi, calc((100vw - 5.5rem) / 16.5)), 3.25rem);
   }
 
   .future-hero-title-line {
@@ -2118,7 +2126,7 @@
   }
 
   .future-hero-title {
-    font-size: clamp(1.35rem, min(12cqi, calc((100vw - 4.75rem) / 12)), 3.2rem);
+    font-size: clamp(1.2rem, min(10.5cqi, calc((100vw - 4.75rem) / 17)), 2.7rem);
     letter-spacing: -0.035em;
   }
 

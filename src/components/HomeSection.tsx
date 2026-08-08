@@ -33,9 +33,18 @@ export function HomeSection() {
     [t],
   );
 
+  const HERO_NAME_LINES = ['JAHONGIR MURTAZAEV', 'MUKHTORKHON UGLI'] as const;
+
   const titleLines = useMemo(() => {
-    const title = settings.hero_title || 'JAHONGIR MURTAZAEV MUKHTORKHON OGLI';
-    return title.trim().split(/\s+/).filter(Boolean);
+    const raw = (settings.hero_title || '').trim().toUpperCase();
+    // Keep CMS override only when it already includes the full legal name.
+    if (raw.includes('MUKHTORKHON') && (raw.includes('UGLI') || raw.includes('OGLI'))) {
+      const words = raw.split(/\s+/).filter(Boolean);
+      if (words.length >= 4) {
+        return [`${words[0]} ${words[1]}`, `${words[2]} ${words[3]}`];
+      }
+    }
+    return [...HERO_NAME_LINES];
   }, [settings.hero_title]);
 
   const goTo = (id: string) => {
@@ -60,8 +69,11 @@ export function HomeSection() {
           transition={{ duration: 1, delay: 0.18, ease: EASE }}
           className="future-hero-title"
         >
-          {titleLines.map(line => (
-            <span key={line} className="future-hero-title-line">
+          {titleLines.map((line, index) => (
+            <span
+              key={line}
+              className={index === 0 ? 'future-hero-title-line' : 'future-hero-title-line future-hero-title-line-sub'}
+            >
               {line}
             </span>
           ))}
