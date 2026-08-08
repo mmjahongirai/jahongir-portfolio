@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
 import { supabase } from '../lib/supabase';
 import type { BlogPost } from '../lib/supabase';
 import { useLanguage } from '../lib/language';
+import { navigateToSection } from '@/lib/scroll';
 import { ArrowLeft, Calendar, Clock, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Card } from './ui/Card';
@@ -48,6 +48,11 @@ export function BlogPostDetail({ slug }: { slug: string }) {
       });
   }, [slug]);
 
+  const goBackToBlog = (event: React.MouseEvent) => {
+    event.preventDefault();
+    navigateToSection('blog');
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-surface-primary flex items-center justify-center">
@@ -62,7 +67,7 @@ export function BlogPostDetail({ slug }: { slug: string }) {
         <div className="text-center space-y-5">
           <h1 className="text-2xl font-bold text-content-primary">Article Not Found</h1>
           <p className="text-content-tertiary">This article doesn't exist or has been removed.</p>
-          <Button variant="ghost" to="/blog" className="inline-flex items-center gap-2 text-sm">
+          <Button variant="ghost" onClick={goBackToBlog} className="inline-flex items-center gap-2 text-sm">
             <ArrowLeft className="w-4 h-4" />
             Back to Blog
           </Button>
@@ -81,10 +86,14 @@ export function BlogPostDetail({ slug }: { slug: string }) {
         transition={{ duration: 0.8, ease: EASING }}
         className="relative z-10 max-container section-padding pt-28 md:pt-32"
       >
-        <Link href="/blog" className="inline-flex items-center gap-2 text-sm text-content-tertiary hover:text-accent-yellow transition-colors mb-10">
+        <button
+          type="button"
+          onClick={goBackToBlog}
+          className="mb-10 inline-flex items-center gap-2 text-sm text-content-tertiary transition-colors hover:text-accent-yellow"
+        >
           <ArrowLeft className="w-4 h-4" />
           {t('blog.title')}
-        </Link>
+        </button>
 
         <article className="max-w-2xl mx-auto">
           <header className="mb-10">

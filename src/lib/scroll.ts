@@ -86,3 +86,21 @@ export function scrollToSectionWhenReady(id: string, behavior: ScrollBehavior = 
     }, delay);
   });
 }
+
+/**
+ * Leave any non-home route (including /blog/[slug]) and land on a homepage section.
+ * Uses a full navigation when off `/` so BlogPostDetail always unmounts — soft App Router
+ * pushes were leaving the post view mounted while only the hash changed.
+ */
+export function navigateToSection(sectionId: string) {
+  if (typeof window === 'undefined') return;
+
+  const path = window.location.pathname;
+  if (path === '/') {
+    scrollToSection(sectionId);
+    return;
+  }
+
+  setPendingSection(sectionId);
+  window.location.assign('/');
+}

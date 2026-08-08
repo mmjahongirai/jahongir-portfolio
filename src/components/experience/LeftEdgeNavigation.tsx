@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Contact,
@@ -18,7 +18,7 @@ import {
   X,
 } from 'lucide-react';
 import { useLanguage } from '@/lib/language';
-import { scrollToSection, setPendingSection } from '@/lib/scroll';
+import { navigateToSection } from '@/lib/scroll';
 import { useTheme } from '@/lib/theme';
 import { cn } from '@/lib/utils';
 
@@ -34,7 +34,6 @@ const languages = ['en', 'ru', 'uz'] as const;
 
 export function LeftEdgeNavigation() {
   const pathname = usePathname();
-  const router = useRouter();
   const { lang, setLang } = useLanguage();
   const { isDark, toggle } = useTheme();
   const [open, setOpen] = useState(false);
@@ -60,15 +59,7 @@ export function LeftEdgeNavigation() {
     event.stopPropagation();
     setOpen(false);
     setLanguagesOpen(false);
-
-    if (onHome) {
-      scrollToSection(id);
-      return;
-    }
-
-    // Real App Router navigation to `/` (never hash-only / pushState fakes).
-    setPendingSection(id);
-    router.push('/');
+    navigateToSection(id);
   };
 
   if (isAdmin) return null;

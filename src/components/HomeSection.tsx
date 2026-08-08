@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowUpRight, Orbit } from 'lucide-react';
 import { useLanguage } from '@/lib/language';
-import { scrollToSection } from '@/lib/scroll';
+import { navigateToSection } from '@/lib/scroll';
 import { supabase } from '@/lib/supabase';
 import { TextRotator } from './ui/TextRotator';
 
@@ -48,7 +48,7 @@ export function HomeSection() {
   }, [settings.hero_title]);
 
   const goTo = (id: string) => {
-    scrollToSection(id);
+    navigateToSection(id);
   };
 
   return (
